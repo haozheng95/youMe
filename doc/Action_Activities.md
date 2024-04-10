@@ -4,7 +4,17 @@
 
 ```bash
 curl -X POST -H "Content-Type: application/json" -d '{
-   "user_id": 1
+   "user_id": 1,
+   "name":"testname",
+   "sex":"male",
+   "province":"shanndong",
+   "city":"linnyi",
+   "age":18,
+   "degree":"master",
+   "marital_status":"unmarried",
+   "occupation":"coder",
+   "monthly_salary":"5000",
+   "phone":"15121066738"
 }' http://localhost:5000/activities/1/register
 ```
 
