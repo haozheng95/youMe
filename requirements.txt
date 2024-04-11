@@ -1,0 +1,16 @@
+certifi==2024.2.2
+charset-normalizer==2.0.12
+click==8.0.4
+dataclasses==0.8
+Flask==2.0.3
+Flask-SQLAlchemy==2.5.1
+greenlet==2.0.2
+idna==3.6
+importlib-metadata==0.7
+itsdangerous==2.0.1
+Jinja2==3.0.3
+MarkupSafe==2.0.1
+requests==2.27.1
+SQLAlchemy==1.4.52
+urllib3==1.26.18
+Werkzeug==2.0.3
