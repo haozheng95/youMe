@@ -1,10 +1,15 @@
 import datetime
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from flask_login import LoginManager
+from flask_login import login_user, logout_user, login_required
 
 app = Flask(__name__)
+app.secret_key = 'your-secret-key'
+login_manager = LoginManager()
+login_manager.init_app(app)
 CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/activity_registration.db'
 db = SQLAlchemy(app)
@@ -318,6 +323,54 @@ def delete_user(user_id):
     db.session.commit()
     return jsonify({'message': 'User deleted successfully'})
 
+
+@app.route('/verificationcode', methods=['POST'])
+def get_verification_code():
+    data = request.get_json()
+    telephone = data.get('telephone')
+    print(telephone)
+    # verification_code = data.get('verification_code')
+    return jsonify({'message': 'send verification code successfully'})
+
+
+@app.route('/verificationcode/verify', methods=['POST'])
+def verify_verification_code():
+    data = request.get_json()
+    telephone = data.get('telephone')
+    print(telephone)
+    verification_code = data.get('verification_code')
+    print(verification_code)
+
+    # 查找用户
+    user = User.query.filter_by(phone=telephone).first()
+
+    # 验证密码
+    if user:
+        login_user(user)  # 登录用户，设置 session
+    else:
+        flash('Invalid username or password')
+    return jsonify({'message': 'send verification code successfully'})
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    # 根据 user_id 从数据库加载用户
+    return User.query.get(int(user_id))
+
+
+# ====================== view
+@app.route('/', methods=['GET'])
+def view_index():
+    return render_template('index.html')
+
+
+@app.route('/view/login', methods=['GET'])
+def view_login():
+    return render_template('login.html')
+
+@app.route('/view/profile', methods=['GET'])
+def view_profile():
+    return render_template('profile.html')
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=80)

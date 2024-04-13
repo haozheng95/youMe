@@ -1,4 +1,6 @@
 # 小程序登陆
+import json
+
 import requests
 
 
@@ -16,10 +18,14 @@ def get_wx_info(code):
 
 
 def send_smscode(code,phone):
-    url = "https://apis.shlianlu.com/sms/trade/normal/send"
+    url = "https://apis.shlianlu.com/sms/v2/trade/normal/send"
     appid = "10011712980782749"
     mchid = "1043983"
     signature = "a584c3eb86c3425e8ba9606b4f9f995f"
+    headers = {
+        'Content-Type': 'application/json;charset=utf-8'
+    }
+
     data = {"Type": "1",
             "PhoneNumberSet": [phone],
             "AppId": appid,
@@ -27,11 +33,9 @@ def send_smscode(code,phone):
             "MchId": mchid,
             "Signature": signature,
             "SessionContext": "您的短信验证码：123456，请在10分钟内输入。",
-            "SignType": "MD5",
-            "TimeStamp": "1647481897155",
             "SignName": "【北京焱一文化传媒有限公司】"
             }
-    response = requests.post(url, data=data)
+    response = requests.post(url, data=json.dumps(data), headers=headers)
     print(response.json())
 
 
