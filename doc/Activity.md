@@ -3,7 +3,18 @@
 ### 创建活动 (POST /activities)
 
 ```bash
-curl -X POST -H "Content-Type: application/json" -d '{"name": "Example Activity", "date": "2023-03-15 10:00:00"}' http://localhost:5000/activities
+curl -X POST http://localhost:5000/activities -H "Content-Type: application/json" -d '  
+{  
+    "name": "Example Activity",  
+    "description": "This is an example activity description.",  
+    "address": "123 Main Street, Cityville",  
+    "start_date": "2023-04-01 10:00:00",  
+    "end_date": "2023-04-01 14:00:00",  
+    "minimum_number_of_participants": 5,  
+    "maximum_number_of_participants": 20,  
+    "price": 50,  
+    "date": "2023-04-01 10:00:00"  
+}'
 ```
 
 ### 获取所有活动 (GET /activities)

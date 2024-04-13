@@ -10,11 +10,55 @@
 ### 创建新用户 (POST /users)
 
 ```bash
-curl -X POST -H "Content-Type: application/json" -d '{
-  "username": "newuser",
-  "wx": "newuser@example.com",
-  "password": "securepassword"
+curl -X POST -H "Content-Type: application/json" -d '  
+{  
+    "phone": "1234567890",  
+    "name": "张三",  
+    "nickname": "张三丰",  
+    "sex": "男",  
+    "province": "广东省",  
+    "city": "广州市",  
+    "age": 30, 
+    "height": 172,
+    "weight": 80,
+    "degree": "本科",  
+    "marital_status": "未婚",  
+    "occupation": "工程师",  
+    "monthly_salary": 10000,  
+    "purpose_of_making_friends": "恋爱",  
+    "living_conditions": "自有住房自住",  
+    "car": "有",  						
+    "travel_experience": "国内游",        
+    "postnuptial_plan": "没想好",          
+    "evaluation_of_appearance": "出众",   
+    "personality_type": "力量型（理性和直率"  
 }' http://localhost:5000/users
+```
+其中有些参数是optional的，并且是enmu类型
+```json
+{
+    "phone": "1234567890",  
+    "name": "张三",  
+    "nickname": "张三丰",  
+    "sex": "男",  
+    "province": "广东省",  
+    "city": "广州市",  
+    "age": 30, 
+    "height": 172,
+    "weight": 80, 
+    "degree": "本科",  
+    "marital_status": "未婚",  
+    "occupation": "工程师",  
+    "monthly_salary": 10000,  
+    # optional 下面参数是可选的
+    "purpose_of_making_friends": "恋爱",     # 结婚/恋爱/交友 
+    "living_conditions": "自有住房自住",       # 自有住房自住/租房/住父母家里
+    "car": "有",                              # 有/无
+    "travel_experience": "国内游",             # 出国游/国内游/本地游
+    "postnuptial_plan": "没想好",             # 要小孩/不要/没想好
+    "evaluation_of_appearance": "出众",       # 出众/较好/中等/一般
+    "personality_type": "力量型（理性和直率）"   # 力量型（理性和直率）、完美型（理性和优柔）、和平型（感性和优柔）和活泼型（感性和直率）
+}'
 ```
 
 ### 获取所有用户 (GET /users)

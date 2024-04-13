@@ -3,19 +3,12 @@
 ### 报名活动接口测试 `curl` 命令 POST(/activities/<int:activity_id>/register)
 
 ```bash
-curl -X POST -H "Content-Type: application/json" -d '{
-   "user_id": 1,
-   "name":"testname",
-   "sex":"male",
-   "province":"shanndong",
-   "city":"linnyi",
-   "age":18,
-   "degree":"master",
-   "marital_status":"unmarried",
-   "occupation":"coder",
-   "monthly_salary":"5000",
-   "phone":"15121066738"
-}' http://localhost:5000/activities/1/register
+curl -X POST http://localhost:5000/activities/1/register -H "Content-Type: application/json" -d '  
+{  
+    "user_id": 1,  
+    "number_of_participants": 1,  
+    "total_price": 50  
+}'
 ```
 
 在这个命令中，我们假设API的报名活动端点是`http://localhost:5000/activities/1/register`，并且它接受一个JSON格式的请求体，其中包含活动ID（`activity_id`）、用户ID（`user_id`）以及其他可选参数（`other_params`）。您需要根据实际的API参数来调整这个命令。

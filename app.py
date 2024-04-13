@@ -13,44 +13,59 @@ class ActivityTable(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     activity_id = db.Column(db.Integer, nullable=False)
     user_id = db.Column(db.Integer, nullable=False)
-    name = db.Column(db.String(50), nullable=False)  # 姓名
-    sex = db.Column(db.String(50), nullable=False)  # 性别
-    province = db.Column(db.String(50), nullable=False)
-    city = db.Column(db.String(50), nullable=False)
-    age = db.Column(db.Integer, nullable=False)
-    degree = db.Column(db.String(50), nullable=False)
-    marital_status = db.Column(db.String(50), nullable=False)
-    occupation = db.Column(db.String(50), nullable=False)  # 职业
-    monthly_salary = db.Column(db.String(50), nullable=False)
-    phone = db.Column(db.String(50), nullable=False)
+    number_of_participants = db.Column(db.Integer, nullable=False)
+    total_price = db.Column(db.String(50), nullable=False)
     datetime = db.Column(db.String(50), nullable=False)
 
 
 # 定义用户模型
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    wx = db.Column(db.String(120), unique=True, nullable=False)
-
-    password = db.Column(db.String(128), nullable=False)
-
-    def set_password(self, password):
-        self.password = password
-
-    def check_password(self, password):
-        return self.password == password
+    phone = db.Column(db.String(50), unique=True, nullable=False)
+    nickname = db.Column(db.String(80), unique=False, nullable=False)
+    name = db.Column(db.String(50), nullable=False)  # 姓名
+    sex = db.Column(db.String(50), nullable=False)  # 性别
+    province = db.Column(db.String(50), nullable=False)
+    city = db.Column(db.String(50), nullable=False)
+    age = db.Column(db.Integer, nullable=False)
+    height = db.Column(db.String(50), nullable=False)
+    weight = db.Column(db.String(50), nullable=False)
+    degree = db.Column(db.String(50), nullable=False)
+    marital_status = db.Column(db.String(50), nullable=False)
+    occupation = db.Column(db.String(50), nullable=False)  # 职业
+    monthly_salary = db.Column(db.String(50), nullable=False)
+    datetime = db.Column(db.String(50), nullable=False)
+    # option
+    purpose_of_making_friends = db.Column(db.String(50), nullable=True)
+    living_conditions = db.Column(db.String(50), nullable=True)
+    car = db.Column(db.String(50), nullable=True)
+    travel_experience = db.Column(db.String(50), nullable=True)
+    postnuptial_plan = db.Column(db.String(50), nullable=True)
+    evaluation_of_appearance = db.Column(db.String(50), nullable=True)
+    personality_type = db.Column(db.String(50), nullable=True)
 
     def to_dict(self):
         return {
             'id': self.id,
-            'username': self.username,
-            'wx': self.wx
+            'nickname': self.nickname,
+            'sex': self.sex,
+            'province': self.province,
+            'city': self.city,
+            'age': self.age,
+            'degree': self.degree,
         }
 
 
 class Activity(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.String(120), nullable=False)
+    address = db.Column(db.String(120))
+    start_date = db.Column(db.DateTime, nullable=False)
+    end_date = db.Column(db.DateTime, nullable=False)
+    minimum_number_of_participants = db.Column(db.Integer, nullable=False)
+    maximum_number_of_participants = db.Column(db.Integer, nullable=False)
+    price = db.Column(db.String(50), nullable=False)
     date = db.Column(db.DateTime, nullable=False)
     participants = db.relationship('User', secondary='activity_user', lazy='dynamic')
 
@@ -58,7 +73,13 @@ class Activity(db.Model):
         return {
             'id': self.id,
             'name': self.name,
-            'date': self.date.strftime('%Y-%m-%d %H:%M:%S')
+            'description': self.description,
+            'address': self.address,
+            'start_date': self.start_date,
+            'end_date': self.end_date,
+            'minimum_number_of_participants': self.minimum_number_of_participants,
+            'maximum_number_of_participants': self.maximum_number_of_participants,
+            'price': self.price,
         }
 
 
@@ -94,17 +115,8 @@ def get_activity_participants(activity_id):
 def register_for_activity(activity_id):
     data = request.get_json()
     user_id = data.get('user_id')
-    row = dict(
-        name=data.get('name'),
-        sex=data.get('sex'),
-        province=data.get('province'),
-        city=data.get('city'),
-        age=data.get('age'),
-        degree=data.get('degree'),
-        marital_status=data.get('marital_status'),
-        occupation=data.get('occupation'),
-        monthly_salary=data.get('monthly_salary'),
-        phone=data.get('phone'))
+    number_of_participants = data.get('number_of_participants')
+    total_price = data.get('total_price')
 
     datetime_now = str(datetime.datetime.now())
 
@@ -122,7 +134,8 @@ def register_for_activity(activity_id):
     if user in activity.participants:
         return jsonify({'error': 'User is already registered for this activity'}), 409
 
-    new_activity_table_record = ActivityTable(user_id=user_id, activity_id=activity_id, datetime=datetime_now, **row)
+    new_activity_table_record = ActivityTable(user_id=user_id, activity_id=activity_id, datetime=datetime_now,
+                                              number_of_participants=number_of_participants, total_price=total_price)
     db.session.add(new_activity_table_record)
     db.session.commit()
     activity.participants.append(user)
@@ -159,16 +172,27 @@ def unregister_from_activity(activity_id):
 def create_activity():
     data = request.get_json()
     name = data.get('name')
+    description = data.get('description')
+    address = data.get('address')
+    start_date_str = data.get('start_date')
+    end_date_str = data.get('end_date')
+    minimum_number_of_participants = data.get('minimum_number_of_participants')
+    maximum_number_of_participants = data.get('maximum_number_of_participants')
+    price = data.get('price')
     date_str = data.get('date')
     if not name or not date_str:
         return jsonify({'error': 'Name and date are required'}), 400
 
     try:
         date = datetime.datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S')
+        start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d %H:%M:%S')
+        end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d %H:%M:%S')
     except ValueError:
         return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD HH:MM:SS'}), 400
 
-    new_activity = Activity(name=name, date=date)
+    new_activity = Activity(name=name, description=description, address=address, start_date=start_date,
+                            end_date=end_date, minimum_number_of_participants=minimum_number_of_participants,
+                            maximum_number_of_participants=maximum_number_of_participants, price=price, date=date)
     db.session.add(new_activity)
     db.session.commit()
     return jsonify(new_activity.to_dict()), 201
@@ -223,18 +247,43 @@ def delete_activity(activity_id):
 @app.route('/users', methods=['POST'])
 def create_user():
     data = request.get_json()
-    username = data.get('username')
-    wx = data.get('wx')
-    password = data.get('password')
+    phone = data.get('phone')
+    name = data.get('name')
+    nickname = data.get('nickname')
+    sex = data.get('sex')
+    province = data.get('province')
+    city = data.get('city')
+    age = data.get('age')
+    height = data.get('height')
+    weight = data.get('weight')
+    degree = data.get('degree')
+    marital_status = data.get('marital_status')
+    occupation = data.get('occupation')
+    monthly_salary = data.get('monthly_salary')
+    datetime_now = str(datetime.datetime.now())
 
-    if not all([username, wx, password]):
-        return jsonify({'error': 'Username, wx, and password are required'}), 400
+    if not all([phone, name, nickname, sex, province, city, age, height, weight, degree, marital_status, occupation,
+                monthly_salary]):
+        return jsonify(
+            {
+                'error': 'phone, name, nickname, sex, province, city, age, height, weight, '
+                         'degree, occupation, monthly_salary and marital_status are required'}), 400
 
-    if User.query.filter_by(username=username).first() or User.query.filter_by(wx=wx).first():
-        return jsonify({'error': 'Username or email already exists'}), 400
+    if User.query.filter_by(phone=phone).first():
+        return jsonify({'error': 'phone already exists'}), 400
 
-    new_user = User(username=username, wx=wx)
-    new_user.set_password(password)
+    new_user = User(phone=phone, nickname=nickname, name=name, sex=sex, province=province, city=city, age=age,
+                    datetime=datetime_now, height=height, weight=weight,
+                    degree=degree, marital_status=marital_status, occupation=occupation, monthly_salary=monthly_salary)
+    # add options
+    new_user.purpose_of_making_friends = data.get('purpose_of_making_friends')
+    new_user.living_conditions = data.get('living_conditions')
+    new_user.car = data.get('car')
+    new_user.travel_experience = data.get('travel_experience')
+    new_user.postnuptial_plan = data.get('postnuptial_plan')
+    new_user.evaluation_of_appearance = data.get('evaluation_of_appearance')
+    new_user.personality_type = data.get('personality_type')
+
     db.session.add(new_user)
     db.session.commit()
     return jsonify(new_user.to_dict()), 201
@@ -269,5 +318,4 @@ def delete_user(user_id):
 
 
 if __name__ == '__main__':
-
-    app.run(debug=True, host='0.0.0.0',port=80)
+    app.run(debug=True, host='0.0.0.0', port=80)
