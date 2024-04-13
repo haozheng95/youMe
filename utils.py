@@ -15,6 +15,27 @@ def get_wx_info(code):
     return openid, session_key
 
 
+def send_smscode(code,phone):
+    url = "https://apis.shlianlu.com/sms/trade/normal/send"
+    appid = "10011712980782749"
+    mchid = "1043983"
+    signature = "a584c3eb86c3425e8ba9606b4f9f995f"
+    data = {"Type": "1",
+            "PhoneNumberSet": [phone],
+            "AppId": appid,
+            "Version": "1.1.0",
+            "MchId": mchid,
+            "Signature": signature,
+            "SessionContext": "您的短信验证码：123456，请在10分钟内输入。",
+            "SignType": "MD5",
+            "TimeStamp": "1647481897155",
+            "SignName": "【北京焱一文化传媒有限公司】"
+            }
+    response = requests.post(url, data=data)
+    print(response.json())
+
+
 if __name__ == '__main__':
-    code = "0c1iGkHa1odsdH0ySTFa1hIosC2iGkHy"
-    print(get_wx_info(code))
+    send_smscode("123", "15121066738")
+    # code = "0c1iGkHa1odsdH0ySTFa1hIosC2iGkHy"
+    # print(get_wx_info(code))

@@ -31,7 +31,7 @@ curl -X POST -H "Content-Type: application/json" -d '
     "travel_experience": "国内游",        
     "postnuptial_plan": "没想好",          
     "evaluation_of_appearance": "出众",   
-    "personality_type": "力量型（理性和直率"  
+    "personality_type": "力量型（理性和直率）"  
 }' http://localhost:5000/users
 ```
 其中有些参数是optional的，并且是enmu类型
