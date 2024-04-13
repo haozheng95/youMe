@@ -246,13 +246,14 @@ JAVASCRIPTS
     var getVerificationCodeBtn = document.getElementById('getVerificationCodeBtn');
     var verificationCode = document.getElementById('VerificationCode')
     var login = document.getElementById('login')
+    var baseUrl = window.location.host
 
     // 为登陆按钮添加点击事件监听器
     login.addEventListener('click', function (event){
         // 阻止表单提交（如果按钮在表单内）
         event.preventDefault();
         $.ajax({
-            url: window.location.host+'/verificationcode/verify',
+            url: baseUrl+'/verificationcode/verify',
             type: 'POST', // 或者 'POST'
             dataType: 'json', // 预期服务器返回的数据类型
             contentType: 'application/json', // 发送信息至服务器时内容编码类型
@@ -282,7 +283,7 @@ JAVASCRIPTS
         login.style.display = '';
         {#telephoneInput.value = '';#}
         $.ajax({
-            url: window.location.host+'/verificationcode',
+            url: baseUrl+'/verificationcode',
             type: 'POST', // 或者 'POST'
             dataType: 'json', // 预期服务器返回的数据类型
             contentType: 'application/json', // 发送信息至服务器时内容编码类型
