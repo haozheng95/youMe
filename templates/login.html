@@ -252,7 +252,7 @@ JAVASCRIPTS
         // 阻止表单提交（如果按钮在表单内）
         event.preventDefault();
         $.ajax({
-            url: window.location.href+'/verificationcode/verify',
+            url: window.location.host+'/verificationcode/verify',
             type: 'POST', // 或者 'POST'
             dataType: 'json', // 预期服务器返回的数据类型
             contentType: 'application/json', // 发送信息至服务器时内容编码类型
@@ -282,7 +282,7 @@ JAVASCRIPTS
         login.style.display = '';
         {#telephoneInput.value = '';#}
         $.ajax({
-            url: window.location.href+'/verificationcode',
+            url: window.location.host+'/verificationcode',
             type: 'POST', // 或者 'POST'
             dataType: 'json', // 预期服务器返回的数据类型
             contentType: 'application/json', // 发送信息至服务器时内容编码类型
