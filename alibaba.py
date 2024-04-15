@@ -25,8 +25,8 @@ class Sample:
         @throws Exception
         """
         config = open_api_models.Config(
-            access_key_id="LTAI5tQVPHrHgMqLojBuq5JY",
-            access_key_secret="HtDWd6KCZB3nhefpMkZIBFn5YHQ01h"
+            access_key_id="",
+            access_key_secret=""
         )
         config.endpoint = f'dysmsapi.aliyuncs.com'
         return OpenApiClient(config)
