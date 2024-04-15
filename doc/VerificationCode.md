@@ -6,7 +6,9 @@
 
 
 ```bash
-curl -X POST http://localhost:5000/verificationcode -H "Content-Type: application/json" -d '{"telephone": "1234567890"}'
+curl -X POST http://localhost:5000/verificationcode -H "Content-Type: application/json" -d '{
+"telephone": "1234567890"
+}'
 ```
 这个命令假设您的Flask应用正在本地运行，并且监听在5000端口上。请根据实际情况替换`localhost:5000`为您的服务器地址和端口。
 
@@ -16,7 +18,11 @@ curl -X POST http://localhost:5000/verificationcode -H "Content-Type: applicatio
 
 
 ```bash
-curl -X POST http://localhost:5000/verificationcode/verify -H "Content-Type: application/json" -d '{"telephone": "1234567890", "verification_code": "123456"}'
+curl -X POST http://localhost:5000/verificationcode/verify -H "Content-Type: application/json" -d '
+{
+  "telephone": "1234567890", 
+  "verification_code": "123456"
+  }'
 ```
 同样，请根据实际情况替换`localhost:5000`为您的服务器地址和端口，并替换`1234567890`和`123456`为实际的电话号码和验证码。
 

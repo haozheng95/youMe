@@ -2,6 +2,8 @@
 import json
 
 import requests
+import random
+import string
 
 
 def get_wx_info(code):
@@ -17,7 +19,7 @@ def get_wx_info(code):
     return openid, session_key
 
 
-def send_smscode(code,phone):
+def send_smscode(code, phone):
     url = "https://apis.shlianlu.com/sms/v2/trade/normal/send"
     appid = "10011712980782749"
     mchid = "1043983"
@@ -32,14 +34,32 @@ def send_smscode(code,phone):
             "Version": "1.1.0",
             "MchId": mchid,
             "Signature": signature,
-            "SessionContext": "您的短信验证码：123456，请在10分钟内输入。",
+            "SessionContext": "您的短信验证码：" + code + "，请在10分钟内输入。",
             "SignName": "【北京焱一文化传媒有限公司】"
             }
     response = requests.post(url, data=json.dumps(data), headers=headers)
-    print(response.json())
+    return response.json()
+
+
+def generate_captcha(length):
+    """
+    生成指定长度的随机验证码
+    :param length: 验证码长度
+    :return: 随机生成的验证码
+    """
+    # 定义验证码字符集，包括大写字母、小写字母和数字
+    # charset = string.ascii_letters + string.digits
+    charset = string.digits
+
+    # 使用random.choices函数从字符集中随机选择指定长度的字符
+    captcha = ''.join(random.choices(charset, k=length))
+    return captcha
 
 
 if __name__ == '__main__':
+    # 生成一个长度为6的验证码
+    captcha = generate_captcha(4)
+    # print("生成的验证码是：", captcha)
     send_smscode("123", "15121066738")
     # code = "0c1iGkHa1odsdH0ySTFa1hIosC2iGkHy"
     # print(get_wx_info(code))

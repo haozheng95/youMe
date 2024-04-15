@@ -1,18 +1,41 @@
 import datetime
+import json
+import logging
 
-from flask import Flask, request, jsonify, render_template, flash
+from flask import Flask, request, jsonify, render_template, flash, session as flask_session
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_login import LoginManager
 from flask_login import login_user, logout_user, login_required
 
+from alibaba import Sample
+from utils import generate_captcha, send_smscode
+
+# 配置日志格式
+# logging.basicConfig(level=logging.INFO,
+#                     format='%(asctime)s %(levelname)s: %(message)s',
+#                     filename='app.log',  # 日志文件名称
+#                     filemode='a')  # 写入模式，“w”会覆盖文件，“a”会追加到文件
+
+# 或者你也可以设置日志输出到控制台
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s %(levelname)s: %(message)s')
+
 app = Flask(__name__)
+# 创建一个日志记录器，可以针对不同的模块或组件使用不同的记录器
+logger = logging.getLogger(__name__)
 app.secret_key = 'your-secret-key'
 login_manager = LoginManager()
 login_manager.init_app(app)
 CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/activity_registration.db'
 db = SQLAlchemy(app)
+
+
+class TelephoneVerification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    telephone = db.Column(db.String(20), unique=True, nullable=False)
+    code = db.Column(db.String(20), nullable=False)
 
 
 # 活动表单
@@ -328,8 +351,21 @@ def delete_user(user_id):
 def get_verification_code():
     data = request.get_json()
     telephone = data.get('telephone')
-    print(telephone)
-    # verification_code = data.get('verification_code')
+    captcha = generate_captcha(4)
+    # response = send_smscode(captcha, telephone)
+    response = Sample.main(telephone, captcha)
+    logger.info("telephone: {}".format(telephone))
+    logger.info("captcha: {}".format(captcha))
+    logger.info("response: {}".format(response))
+    if response["body"]["Message"] != "OK":
+        return jsonify({'error': 'send verification code failed', 'text': json.dumps(response)}), 400
+    record = TelephoneVerification.query.filter_by(telephone=telephone).first()
+    if record:
+        db.session.delete(record)
+        db.session.commit()
+    new_record = TelephoneVerification(telephone=telephone, code=captcha)
+    db.session.add(new_record)
+    db.session.commit()
     return jsonify({'message': 'send verification code successfully'})
 
 
@@ -337,19 +373,28 @@ def get_verification_code():
 def verify_verification_code():
     data = request.get_json()
     telephone = data.get('telephone')
-    print(telephone)
     verification_code = data.get('verification_code')
-    print(verification_code)
+    logger.info("receive --- >telephone: {}".format(telephone))
+    logger.info("receive --- >verification_code: {}".format(verification_code))
+    record = TelephoneVerification.query.filter_by(telephone=telephone).first()
 
+    if record is None:
+        return jsonify({'error': 'Invalid Telephone'}), 400
+
+    logger.info("save -> code:{}   save -> telephone: {}".format(record.code, record.telephone))
+    if verification_code != record.code:
+        return jsonify({'error': 'Invalid Verification Code'}), 401
+    db.session.delete(record)
+    db.session.commit()
     # 查找用户
     user = User.query.filter_by(phone=telephone).first()
-
     # 验证密码
     if user:
-        login_user(user)  # 登录用户，设置 session
+        return jsonify({'message': 'Successful verificationt and The user has filled in the personal information.',
+                        'user_id': user.id}), 200
     else:
-        flash('Invalid username or password')
-    return jsonify({'message': 'send verification code successfully'})
+        flash('Invalid User')
+    return jsonify({'message': 'Successful verificationt'}), 200
 
 
 @login_manager.user_loader
@@ -368,9 +413,11 @@ def view_index():
 def view_login():
     return render_template('login.html')
 
+
 @app.route('/view/profile', methods=['GET'])
 def view_profile():
     return render_template('profile.html')
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=80)
