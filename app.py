@@ -6,10 +6,10 @@ from flask import Flask, request, jsonify, render_template, flash, session as fl
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_login import LoginManager
-from flask_login import login_user, logout_user, login_required
 
 from alibaba import Sample
 from utils import generate_captcha, send_smscode
+from AREA import AREA, provinces_and_cities
 
 # 配置日志格式
 # logging.basicConfig(level=logging.INFO,
@@ -396,6 +396,20 @@ def verify_verification_code():
         flash('Invalid User')
     return jsonify({'message': 'Successful verificationt'}), 200
 
+
+@app.route('/provinces', methods=['GET'])
+def get_provinces():
+    """获取所有省份列表"""
+    return jsonify(list(provinces_and_cities.keys()))
+
+@app.route('/province/<province_name>/cities', methods=['GET'])
+def get_cities_by_province(province_name):
+    """根据省份名称获取对应的城市列表"""
+    if province_name in provinces_and_cities:
+        cities = provinces_and_cities[province_name]
+        return jsonify(cities)
+    else:
+        return jsonify({"error": "Province not found"}), 404
 
 @login_manager.user_loader
 def load_user(user_id):
