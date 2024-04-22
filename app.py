@@ -1,6 +1,7 @@
 import datetime
 import json
 import logging
+from functools import wraps
 
 from flask import Flask, request, jsonify, render_template, flash, session as flask_session
 from flask_sqlalchemy import SQLAlchemy
@@ -8,7 +9,7 @@ from flask_cors import CORS
 from flask_login import LoginManager
 
 from alibaba import Sample
-from utils import generate_captcha, send_smscode
+from utils import generate_captcha, send_smscode, generate_token, verify_token
 from AREA import AREA, provinces_and_cities
 
 # 配置日志格式
@@ -32,6 +33,23 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/activity_registration.db
 db = SQLAlchemy(app)
 
 
+# 装饰器：用于保护需要认证的路由
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        if 'Authorization' in request.headers:
+            logger.info("Authorization header: %s", request.headers['Authorization'])
+            token = request.headers['Authorization'].split()[1]
+        if not token:
+            return jsonify({'error': 'Missing token. Authorization header required.'}), 401
+        if not verify_token(token):
+            return jsonify({'error': 'Invalid token.'}), 401
+        return f(*args, **kwargs)
+
+    return decorated
+
+
 class TelephoneVerification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     telephone = db.Column(db.String(20), unique=True, nullable=False)
@@ -46,6 +64,27 @@ class ActivityTable(db.Model):
     number_of_participants = db.Column(db.Integer, nullable=False)
     total_price = db.Column(db.String(50), nullable=False)
     datetime = db.Column(db.String(50), nullable=False)
+    phone = db.Column(db.String(50), unique=True, nullable=False)
+    nickname = db.Column(db.String(80), unique=False, nullable=False)
+    name = db.Column(db.String(50), nullable=False)  # 姓名
+    sex = db.Column(db.String(50), nullable=False)  # 性别
+    province = db.Column(db.String(50), nullable=False)
+    city = db.Column(db.String(50), nullable=False)
+    age = db.Column(db.Integer, nullable=False)
+    height = db.Column(db.String(50), nullable=False)
+    weight = db.Column(db.String(50), nullable=False)
+    degree = db.Column(db.String(50), nullable=False)
+    marital_status = db.Column(db.String(50), nullable=False)
+    occupation = db.Column(db.String(50), nullable=False)  # 职业
+    monthly_salary = db.Column(db.String(50), nullable=False)
+    # option
+    purpose_of_making_friends = db.Column(db.String(50), nullable=True)
+    living_conditions = db.Column(db.String(50), nullable=True)
+    car = db.Column(db.String(50), nullable=True)
+    travel_experience = db.Column(db.String(50), nullable=True)
+    postnuptial_plan = db.Column(db.String(50), nullable=True)
+    evaluation_of_appearance = db.Column(db.String(50), nullable=True)
+    personality_type = db.Column(db.String(50), nullable=True)
 
 
 # 定义用户模型
@@ -97,6 +136,7 @@ class Activity(db.Model):
     maximum_number_of_participants = db.Column(db.Integer, nullable=False)
     price = db.Column(db.String(50), nullable=False)
     date = db.Column(db.DateTime, nullable=False)
+    activity_type = db.Column(db.Integer, nullable=False)  # 1 线下活动 2 过关立见 3 随机匹配
     participants = db.relationship('User', secondary='activity_user', lazy='dynamic')
 
     def to_dict(self):
@@ -165,7 +205,16 @@ def register_for_activity(activity_id):
         return jsonify({'error': 'User is already registered for this activity'}), 409
 
     new_activity_table_record = ActivityTable(user_id=user_id, activity_id=activity_id, datetime=datetime_now,
-                                              number_of_participants=number_of_participants, total_price=total_price)
+                                              number_of_participants=number_of_participants, total_price=total_price,
+                                              phone=user.phone, nickname=user.nickname, name=user.name, sex=user.sex,
+                                              province=user.province, city=user.city, age=user.age, height=user.height,
+                                              weight=user.weight, degree=user.degree,
+                                              marital_status=user.marital_status,
+                                              occupation=user.occupation, monthly_salary=user.monthly_salary,
+                                              personality_type=user.personality_type, car=user.car,
+                                              travel_experience=user.travel_experi,
+                                              postnuptial_plan=user.postnuptial_plan,
+                                              evaluation_of_appearance=user.evaluation_of_appearance, )
     db.session.add(new_activity_table_record)
     db.session.commit()
     activity.participants.append(user)
@@ -316,7 +365,9 @@ def create_user():
 
     db.session.add(new_user)
     db.session.commit()
-    return jsonify(new_user.to_dict()), 201
+    data = new_user.to_dict()
+    data["auth_token"] = generate_token(data["id"])
+    return jsonify(data)
 
 
 # 获取所有用户
@@ -328,6 +379,7 @@ def get_users():
 
 # 获取单个用户
 @app.route('/users/<int:user_id>', methods=['GET'])
+@requires_auth
 def get_user(user_id):
     user = User.query.get(user_id)
     if not user:
@@ -390,17 +442,19 @@ def verify_verification_code():
     user = User.query.filter_by(phone=telephone).first()
     # 验证密码
     if user:
+        token = generate_token(user.id)
         return jsonify({'message': 'Successful verificationt and The user has filled in the personal information.',
-                        'user_id': user.id}), 200
-    else:
-        flash('Invalid User')
-    return jsonify({'message': 'Successful verificationt'}), 200
+                        'user_id': user.id, 'auth_token': token}), 200
+    return jsonify({'message': 'Successful verificationt,'
+                               'However, you are an unregistered user and need to submit information to register',
+                    'user_id': -1, 'auth_token': ''}), 200
 
 
 @app.route('/provinces', methods=['GET'])
 def get_provinces():
     """获取所有省份列表"""
     return jsonify(list(provinces_and_cities.keys()))
+
 
 @app.route('/province/<province_name>/cities', methods=['GET'])
 def get_cities_by_province(province_name):
@@ -410,6 +464,7 @@ def get_cities_by_province(province_name):
         return jsonify(cities)
     else:
         return jsonify({"error": "Province not found"}), 404
+
 
 @login_manager.user_loader
 def load_user(user_id):
