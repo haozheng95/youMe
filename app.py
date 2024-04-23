@@ -42,9 +42,9 @@ def requires_auth(f):
             logger.info("Authorization header: %s", request.headers['Authorization'])
             token = request.headers['Authorization'].split()[1]
         if not token:
-            return jsonify({'error': 'Missing token. Authorization header required.'}), 401
+            return jsonify({'error': 'Missing token. Authorization header required.', 'code': 0}), 401
         if not verify_token(token):
-            return jsonify({'error': 'Invalid token.'}), 401
+            return jsonify({'error': 'Invalid token.', 'code': 0}), 401
         return f(*args, **kwargs)
 
     return decorated
@@ -167,7 +167,7 @@ db.create_all()
 @app.route('/activities', methods=['GET'])
 def get_activities():
     activities = Activity.query.all()
-    return jsonify([activity.to_dict() for activity in activities])
+    return jsonify({'data': [activity.to_dict() for activity in activities], 'code': 1})
 
 
 # 获取特定活动的报名用户
@@ -175,9 +175,9 @@ def get_activities():
 def get_activity_participants(activity_id):
     activity = Activity.query.get(activity_id)
     if not activity:
-        return jsonify({'error': 'Activity not found'}), 404
+        return jsonify({'error': 'Activity not found', 'code': 0}), 404
     participants = [user.to_dict() for user in activity.participants.all()]
-    return jsonify(participants)
+    return jsonify({'participants': participants, 'code': 1})
 
 
 # 用户报名活动
@@ -191,18 +191,18 @@ def register_for_activity(activity_id):
     datetime_now = str(datetime.datetime.now())
 
     if not user_id:
-        return jsonify({'error': 'User ID required'}), 400
+        return jsonify({'error': 'User ID required', 'code': 0}), 400
 
     user = User.query.get(user_id)
     if not user:
-        return jsonify({'error': 'User not found'}), 404
+        return jsonify({'error': 'User not found', 'code': 0}), 404
 
     activity = Activity.query.get(activity_id)
     if not activity:
-        return jsonify({'error': 'Activity not found'}), 404
+        return jsonify({'error': 'Activity not found', 'code': 0}), 404
 
     if user in activity.participants:
-        return jsonify({'error': 'User is already registered for this activity'}), 409
+        return jsonify({'error': 'User is already registered for this activity', 'code': 0}), 409
 
     new_activity_table_record = ActivityTable(user_id=user_id, activity_id=activity_id, datetime=datetime_now,
                                               number_of_participants=number_of_participants, total_price=total_price,
@@ -219,7 +219,7 @@ def register_for_activity(activity_id):
     db.session.commit()
     activity.participants.append(user)
     db.session.commit()
-    return jsonify({'message': 'User registered successfully'})
+    return jsonify({'message': 'User registered successfully', 'code': 1})
 
 
 # 用户取消报名活动
@@ -229,21 +229,21 @@ def unregister_from_activity(activity_id):
     user_id = data.get('user_id')
 
     if not user_id:
-        return jsonify({'error': 'User ID required'}), 400
+        return jsonify({'error': 'User ID required', 'code': 0}), 400
 
     user = User.query.get(user_id)
     if not user:
-        return jsonify({'error': 'User not found'}), 404
+        return jsonify({'error': 'User not found', 'code': 0}), 404
 
     activity = Activity.query.get(activity_id)
     if not activity:
-        return jsonify({'error': 'Activity not found'}), 404
+        return jsonify({'error': 'Activity not found', 'code': 0}), 404
 
     if user not in activity.participants:
-        return jsonify({'error': 'User is not registered for this activity'}), 409
+        return jsonify({'error': 'User is not registered for this activity', 'code': 0}), 409
     activity.participants.remove(user)
     db.session.commit()
-    return jsonify({'message': 'User unregistered successfully'})
+    return jsonify({'message': 'User unregistered successfully', 'code': 1})
 
 
 # 创建活动
@@ -260,21 +260,21 @@ def create_activity():
     price = data.get('price')
     date_str = data.get('date')
     if not name or not date_str:
-        return jsonify({'error': 'Name and date are required'}), 400
+        return jsonify({'error': 'Name and date are required', 'code': 0}), 400
 
     try:
         date = datetime.datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S')
         start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d %H:%M:%S')
         end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d %H:%M:%S')
     except ValueError:
-        return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD HH:MM:SS'}), 400
+        return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD HH:MM:SS', 'code': 0}), 400
 
     new_activity = Activity(name=name, description=description, address=address, start_date=start_date,
                             end_date=end_date, minimum_number_of_participants=minimum_number_of_participants,
                             maximum_number_of_participants=maximum_number_of_participants, price=price, date=date)
     db.session.add(new_activity)
     db.session.commit()
-    return jsonify(new_activity.to_dict()), 201
+    return jsonify({'new_activity': new_activity.to_dict(), 'code': 1}), 20
 
 
 # 获取单个活动
@@ -282,7 +282,7 @@ def create_activity():
 def get_activity(activity_id):
     activity = Activity.query.get(activity_id)
     if not activity:
-        return jsonify({'error': 'Activity not found'}), 404
+        return jsonify({'error': 'Activity not found', 'code': 0}), 404
     return jsonify(activity.to_dict())
 
 
@@ -292,7 +292,7 @@ def update_activity(activity_id):
     data = request.get_json()
     activity = Activity.query.get(activity_id)
     if not activity:
-        return jsonify({'error': 'Activity not found'}), 404
+        return jsonify({'error': 'Activity not found', 'code': 0}), 404
 
     name = data.get('name')
     if name:
@@ -304,7 +304,7 @@ def update_activity(activity_id):
             date = datetime.datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S')
             activity.date = date
         except ValueError:
-            return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD HH:MM:SS'}), 400
+            return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD HH:MM:SS', 'code': 0}), 400
 
     db.session.commit()
     return jsonify(activity.to_dict())
@@ -315,11 +315,11 @@ def update_activity(activity_id):
 def delete_activity(activity_id):
     activity = Activity.query.get(activity_id)
     if not activity:
-        return jsonify({'error': 'Activity not found'}), 404
+        return jsonify({'error': 'Activity not found', 'code': 0}), 404
 
     db.session.delete(activity)
     db.session.commit()
-    return jsonify({'message': 'Activity deleted successfully'})
+    return jsonify({'message': 'Activity deleted successfully', 'code': 0})
 
 
 # 创建用户
@@ -346,10 +346,10 @@ def create_user():
         return jsonify(
             {
                 'error': 'phone, name, nickname, sex, province, city, age, height, weight, '
-                         'degree, occupation, monthly_salary and marital_status are required'}), 400
+                         'degree, occupation, monthly_salary and marital_status are required', 'code': 0}), 400
 
     if User.query.filter_by(phone=phone).first():
-        return jsonify({'error': 'phone already exists'}), 400
+        return jsonify({'error': 'phone already exists', 'code': 0}), 400
 
     new_user = User(phone=phone, nickname=nickname, name=name, sex=sex, province=province, city=city, age=age,
                     datetime=datetime_now, height=height, weight=weight,
@@ -383,7 +383,7 @@ def get_users():
 def get_user(user_id):
     user = User.query.get(user_id)
     if not user:
-        return jsonify({'error': 'User not found'}), 404
+        return jsonify({'error': 'User not found', 'code': 0}), 404
     return jsonify(user.to_dict())
 
 
@@ -392,11 +392,11 @@ def get_user(user_id):
 def delete_user(user_id):
     user = User.query.get(user_id)
     if not user:
-        return jsonify({'error': 'User not found'}), 404
+        return jsonify({'error': 'User not found', 'code': 0}), 404
 
     db.session.delete(user)
     db.session.commit()
-    return jsonify({'message': 'User deleted successfully'})
+    return jsonify({'message': 'User deleted successfully', 'code': 1})
 
 
 @app.route('/verificationcode', methods=['POST'])
@@ -410,7 +410,7 @@ def get_verification_code():
     logger.info("captcha: {}".format(captcha))
     logger.info("response: {}".format(response))
     if response["body"]["Message"] != "OK":
-        return jsonify({'error': 'send verification code failed', 'text': json.dumps(response)}), 400
+        return jsonify({'error': 'send verification code failed', 'text': json.dumps(response), 'code': 0}), 400
     record = TelephoneVerification.query.filter_by(telephone=telephone).first()
     if record:
         db.session.delete(record)
@@ -418,7 +418,7 @@ def get_verification_code():
     new_record = TelephoneVerification(telephone=telephone, code=captcha)
     db.session.add(new_record)
     db.session.commit()
-    return jsonify({'message': 'send verification code successfully'})
+    return jsonify({'message': 'send verification code successfully', 'code': 1})
 
 
 @app.route('/verificationcode/verify', methods=['POST'])
@@ -431,11 +431,11 @@ def verify_verification_code():
     record = TelephoneVerification.query.filter_by(telephone=telephone).first()
 
     if record is None:
-        return jsonify({'error': 'Invalid Telephone'}), 400
+        return jsonify({'error': 'Invalid Telephone', 'code': 0}), 400
 
     logger.info("save -> code:{}   save -> telephone: {}".format(record.code, record.telephone))
     if verification_code != record.code:
-        return jsonify({'error': 'Invalid Verification Code'}), 401
+        return jsonify({'error': 'Invalid Verification Code', 'code': 0}), 401
     db.session.delete(record)
     db.session.commit()
     # 查找用户
@@ -444,16 +444,16 @@ def verify_verification_code():
     if user:
         token = generate_token(user.id)
         return jsonify({'message': 'Successful verificationt and The user has filled in the personal information.',
-                        'user_id': user.id, 'auth_token': token}), 200
+                        'user_id': user.id, 'auth_token': token, 'code': 1}), 200
     return jsonify({'message': 'Successful verificationt,'
                                'However, you are an unregistered user and need to submit information to register',
-                    'user_id': -1, 'auth_token': ''}), 200
+                    'user_id': -1, 'auth_token': '', 'code': 1}), 200
 
 
 @app.route('/provinces', methods=['GET'])
 def get_provinces():
     """获取所有省份列表"""
-    return jsonify(list(provinces_and_cities.keys()))
+    return jsonify({'provinces': list(provinces_and_cities.keys()), 'code': 1})
 
 
 @app.route('/province/<province_name>/cities', methods=['GET'])
@@ -461,9 +461,9 @@ def get_cities_by_province(province_name):
     """根据省份名称获取对应的城市列表"""
     if province_name in provinces_and_cities:
         cities = provinces_and_cities[province_name]
-        return jsonify(cities)
+        return jsonify({'cities': cities, 'code': 1})
     else:
-        return jsonify({"error": "Province not found"}), 404
+        return jsonify({"error": "Province not found", 'code': 0}), 404
 
 
 @login_manager.user_loader
