@@ -6,8 +6,7 @@
 curl -X POST http://localhost:5000/activities/1/register -H "Content-Type: application/json" -d '  
 {  
     "user_id": 1,  
-    "number_of_participants": 1,  
-    "total_price": 50  
+    "open_id": "o_rIW4_ZX4_jjfBu86EKQm7Dxx5w"
 }'
 ```
 

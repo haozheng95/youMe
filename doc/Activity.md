@@ -13,7 +13,8 @@ curl -X POST http://localhost:5000/activities -H "Content-Type: application/json
     "minimum_number_of_participants": 5,  
     "maximum_number_of_participants": 20,  
     "price": 50,  
-    "date": "2023-04-01 10:00:00"  
+    "date": "2023-04-01 10:00:00",  
+    "date": "2023-04-01 10:00:00",  
 }'
 ```
 

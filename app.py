@@ -3,6 +3,7 @@ import json
 import logging
 from functools import wraps
 
+import xmltodict
 from flask import Flask, request, jsonify, render_template, flash, session as flask_session
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -11,6 +12,7 @@ from flask_login import LoginManager
 from alibaba import Sample
 from utils import generate_captcha, send_smscode, generate_token, verify_token
 from AREA import AREA, provinces_and_cities
+from wx_pay import create_wx_pay_body, wx_pay
 
 # 配置日志格式
 # logging.basicConfig(level=logging.INFO,
@@ -185,9 +187,11 @@ def get_activity_participants(activity_id):
 def register_for_activity(activity_id):
     data = request.get_json()
     user_id = data.get('user_id')
-    number_of_participants = data.get('number_of_participants')
-    total_price = data.get('total_price')
-
+    # number_of_participants = data.get('number_of_participants')
+    # total_price = data.get('total_price')
+    open_id = data.get('open_id', None)
+    if open_id is None or len(open_id) == 0:
+        return jsonify({'error': 'open_id required', 'code': 0}), 400
     datetime_now = str(datetime.datetime.now())
 
     if not user_id:
@@ -203,23 +207,30 @@ def register_for_activity(activity_id):
 
     if user in activity.participants:
         return jsonify({'error': 'User is already registered for this activity', 'code': 0}), 409
-
+    total_price = activity.price
     new_activity_table_record = ActivityTable(user_id=user_id, activity_id=activity_id, datetime=datetime_now,
-                                              number_of_participants=number_of_participants, total_price=total_price,
+                                              number_of_participants=1, total_price=total_price,
                                               phone=user.phone, nickname=user.nickname, name=user.name, sex=user.sex,
                                               province=user.province, city=user.city, age=user.age, height=user.height,
                                               weight=user.weight, degree=user.degree,
                                               marital_status=user.marital_status,
                                               occupation=user.occupation, monthly_salary=user.monthly_salary,
                                               personality_type=user.personality_type, car=user.car,
-                                              travel_experience=user.travel_experi,
+                                              travel_experience=user.travel_experience,
                                               postnuptial_plan=user.postnuptial_plan,
-                                              evaluation_of_appearance=user.evaluation_of_appearance, )
+                                              evaluation_of_appearance=user.evaluation_of_appearance,
+                                              )
     db.session.add(new_activity_table_record)
     db.session.commit()
     activity.participants.append(user)
     db.session.commit()
-    return jsonify({'message': 'User registered successfully', 'code': 1})
+
+    body = create_wx_pay_body(activity.description, open_id, int(total_price) * 100)
+    r = wx_pay(body)
+    if r.status_code != 200:
+        return jsonify({'error': r.text, 'code': 0}), 400
+
+    return jsonify({'message': 'User registered successfully', 'prepay_id': r.json()['prepay_id'], 'code': 1})
 
 
 # 用户取消报名活动
@@ -259,22 +270,25 @@ def create_activity():
     maximum_number_of_participants = data.get('maximum_number_of_participants')
     price = data.get('price')
     date_str = data.get('date')
+    activity_type = data.get('activity_type')
+    logger.info("Create activity")
     if not name or not date_str:
-        return jsonify({'error': 'Name and date are required', 'code': 0}), 400
+        return jsonify({'error': 'Name and date are required', 'code': 0}), 401
 
     try:
         date = datetime.datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S')
         start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d %H:%M:%S')
         end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d %H:%M:%S')
     except ValueError:
-        return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD HH:MM:SS', 'code': 0}), 400
+        return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD HH:MM:SS', 'code': 0}), 402
 
     new_activity = Activity(name=name, description=description, address=address, start_date=start_date,
                             end_date=end_date, minimum_number_of_participants=minimum_number_of_participants,
-                            maximum_number_of_participants=maximum_number_of_participants, price=price, date=date)
+                            maximum_number_of_participants=maximum_number_of_participants, price=price, date=date,
+                            activity_type=activity_type)
     db.session.add(new_activity)
     db.session.commit()
-    return jsonify({'new_activity': new_activity.to_dict(), 'code': 1}), 20
+    return jsonify({'new_activity': new_activity.to_dict(), 'code': 1})
 
 
 # 获取单个活动
@@ -384,7 +398,7 @@ def get_user(user_id):
     user = User.query.get(user_id)
     if not user:
         return jsonify({'error': 'User not found', 'code': 0}), 404
-    return jsonify(user.to_dict())
+    return jsonify({'data': user.to_dict(), 'code': 1})
 
 
 # 删除用户
@@ -466,6 +480,33 @@ def get_cities_by_province(province_name):
         return jsonify({"error": "Province not found", 'code': 0}), 404
 
 
+@app.route('/wechat_pay/notify', methods=['POST'])
+def wechat_pay_notify():
+    try:
+        # 获取请求体内容
+        xml_data = request.data.decode('utf-8')
+        data = xmltodict.parse(xml_data)['xml']
+
+        # 验证签名
+        # signature = data.pop('sign')
+        # if not verify_signature(data, signature):
+        #     logger.info("verify signature failed")
+        #     return 'verify signature failed', 400
+
+        # 处理业务逻辑
+        # 例如：更新订单状态、记录支付信息等
+
+        # 返回处理结果给微信支付
+        return_data = {
+            'return_code': 'SUCCESS',  # 返回状态码
+            'return_msg': 'OK'  # 返回信息
+        }
+        return xmltodict.unparse({'xml': return_data}), 200
+    except Exception as e:
+        logger.info("error: {}".format(e))
+        return '处理通知时发生错误', 500
+
+
 @login_manager.user_loader
 def load_user(user_id):
     # 根据 user_id 从数据库加载用户
@@ -489,4 +530,4 @@ def view_profile():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=80)
+    app.run(debug=False, host='0.0.0.0', port=80)

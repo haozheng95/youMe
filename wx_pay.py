@@ -1,11 +1,13 @@
 import json
 import time
 
+import requests
 from Crypto.PublicKey import RSA
 import random
 from Crypto.Signature import PKCS1_v1_5
 from Crypto.Hash import SHA256
 import base64
+
 
 class Authorization(object):
     def __init__(self):
@@ -58,7 +60,8 @@ class Authorization(object):
     # 生成 Authorization
     def authorization(self, method, url_path, nonce_str, timestamp, body=None):
         # 加密子串
-        signstr = self.sign_str(method=method, url_path=url_path, timestamp=timestamp, nonce_str=nonce_str, request_body=body)
+        signstr = self.sign_str(method=method, url_path=url_path, timestamp=timestamp, nonce_str=nonce_str,
+                                request_body=body)
         print("加密原子串：" + signstr)
         # 加密后子串
         s = self.sign(signstr)
@@ -77,16 +80,50 @@ class Authorization(object):
                    )
         return authorization
 
-if __name__ == '__main__':
+
+def wx_pay(body):
     method = "POST"
     url_path = "/v3/pay/transactions/jsapi"
-    # url_path = "/v3/certificates"
+    url = "https://api.mch.weixin.qq.com/v3/pay/transactions/jsapi"
     timestamp = str(int(time.time()))
     nonce_str = Authorization().getNonceStr()
-    body = {'appid': 'wx0e24eb45b22f83c3', 'mchid': '1637086246', 'description': '爱奇艺周卡', 'out_trade_no': 'LY1111111111', 'notify_url': 'http://127.0.0.1', 'amount': {'total': 1, 'currency': 'CNY'}, 'payer': {'openid': 'o_rIW4_ZX4_jjfBu86EKQm7Dxx5w'}}
-    authorization = Authorization().authorization(method=method, url_path=url_path, nonce_str=nonce_str, timestamp=timestamp, body=json.dumps(body))
-    print(1111)
-    print(authorization)
-    print(222)
-    print(json.dumps(body))
+    authorization = Authorization().authorization(method=method, url_path=url_path, nonce_str=nonce_str,
+                                                  timestamp=timestamp, body=json.dumps(body))
 
+    header = {
+        'Content-Type': 'application/json',
+        'Authorization': authorization
+    }
+
+    response = requests.post(url, headers=header, json=body)
+    return response
+
+
+def create_wx_pay_body(description, openid, amount):
+    appid = 'wx0e24eb45b22f83c3'
+    mchid = '1637086246'
+    notify_url = 'https://api.mch.weixin.qq.com/v3/notify/jsapi'
+
+    return {'appid': appid, 'mchid': mchid, 'description': description,
+            'out_trade_no': Authorization().getNonceStr(), 'notify_url': notify_url,
+            'amount': {'total': amount, 'currency': 'CNY'},
+            'payer': {'openid': openid}}
+
+
+if __name__ == '__main__':
+    body = create_wx_pay_body('aaaa', 'o_rIW4_ZX4_jjfBu86EKQm7Dxx5w', 1)
+    print(wx_pay(body).text)
+    # method = "POST"
+    # url_path = "/v3/pay/transactions/jsapi"
+    # url_path = "/v3/certificates"
+    # timestamp = str(int(time.time()))
+    # nonce_str = Authorization().getNonceStr()
+    # body = {'appid': 'wx0e24eb45b22f83c3', 'mchid': '1637086246', 'description': '爱奇艺周卡',
+    #         'out_trade_no': 'LY1111111111', 'notify_url': 'http://127.0.0.1', 'amount': {'total': 1, 'currency': 'CNY'},
+    #         'payer': {'openid': 'o_rIW4_ZX4_jjfBu86EKQm7Dxx5w'}}
+    # authorization = Authorization().authorization(method=method, url_path=url_path, nonce_str=nonce_str,
+    #                                               timestamp=timestamp, body=json.dumps(body))
+    # print(1111)
+    # print(authorization)
+    # print(222)
+    # print(json.dumps(body))
