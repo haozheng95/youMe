@@ -137,9 +137,15 @@ class Activity(db.Model):
     minimum_number_of_participants = db.Column(db.Integer, nullable=False)
     maximum_number_of_participants = db.Column(db.Integer, nullable=False)
     price = db.Column(db.String(50), nullable=False)
+    banner = db.Column(db.Integer, nullable=False)  # 1 设置为banner 0 为普通活动
+    img_link = db.Column(db.String(120), nullable=False)
     date = db.Column(db.DateTime, nullable=False)
     activity_type = db.Column(db.Integer, nullable=False)  # 1 线下活动 2 过关立见 3 随机匹配
     participants = db.relationship('User', secondary='activity_user', lazy='dynamic')
+
+    def get_deadline_for_registration(self):
+        reference_date = datetime.datetime.now()
+        return (self.start_date - reference_date).days
 
     def to_dict(self):
         return {
@@ -152,6 +158,10 @@ class Activity(db.Model):
             'minimum_number_of_participants': self.minimum_number_of_participants,
             'maximum_number_of_participants': self.maximum_number_of_participants,
             'price': self.price,
+            'img_link': self.img_link,
+            'banner': self.banner,
+            'activity_type': self.activity_type,
+            'deadline_for_registration': self.get_deadline_for_registration()
         }
 
 
@@ -169,55 +179,10 @@ db.create_all()
 @app.route('/activities', methods=['GET'])
 def get_activities():
     activities = Activity.query.all()
-    # return jsonify({'data': [activity.to_dict() for activity in activities], 'code': 1})
-    data = {
-        "code": 1,
-        "banner_list": [
-            {
-                "address": "Beijing Main Street, Cityville",
-                "description": "This is an example Banner description.",
-                "end_date": "Sat, 01 Apr 2023 14:00:00 GMT",
-                "img_link": "https://hssx.top/static/assets/img/demo/blog4.jpg",
-                "id": 2,
-                "maximum_number_of_participants": 20,
-                "minimum_number_of_participants": 5,
-                "name": "Example Activity",
-                "price": "10",
-                "start_date": "Sat, 01 Apr 2023 10:00:00 GMT",
-                "activity_type": 1,
-                "deadline_for_registration": 5,
-            }
-        ],
-        "activity_list": [
-            {
-                "address": "123 Main Street, Cityville",
-                "description": "This is an example activity description.",
-                "end_date": "Sat, 01 Apr 2023 14:00:00 GMT",
-                "img_link": "https://hssx.top/static/assets/img/demo/blog5.jpg",
-                "id": 1,
-                "maximum_number_of_participants": 20,
-                "minimum_number_of_participants": 5,
-                "name": "Example Activity",
-                "price": "50",
-                "start_date": "Sat, 01 Apr 2023 10:00:00 GMT",
-                "activity_type": 1,
-                "deadline_for_registration": 5,
-            },{
-                "address": "hhhhhhhhh Main Street, Cityville",
-                "description": "This is an example activity description.",
-                "end_date": "Sat, 01 Apr 2023 14:00:00 GMT",
-                "img_link": "https://hssx.top/static/assets/img/demo/blog6.jpg",
-                "id": 3,
-                "maximum_number_of_participants": 20,
-                "minimum_number_of_participants": 5,
-                "name": "Example Activity",
-                "price": "50",
-                "start_date": "Sat, 01 Apr 2023 10:00:00 GMT",
-                "activity_type": 1,
-                "deadline_for_registration": 5,
-            },
-        ]
-    }
+    all_activities = [activity.to_dict() for activity in activities]
+    banner_list = [x for x in all_activities if x["banner"] == 1]
+    activity_list = [x for x in all_activities if x["banner"] == 0]
+    data = {"code": 1, "banner_list": banner_list, "activity_list": activity_list}
     return jsonify(data)
 
 
@@ -320,6 +285,9 @@ def create_activity():
     price = data.get('price')
     date_str = data.get('date')
     activity_type = data.get('activity_type')
+    img_link = data.get('img_link')
+    banner = data.get('banner')
+
     logger.info("Create activity")
     if not name or not date_str:
         return jsonify({'error': 'Name and date are required', 'code': 0}), 401
@@ -334,7 +302,7 @@ def create_activity():
     new_activity = Activity(name=name, description=description, address=address, start_date=start_date,
                             end_date=end_date, minimum_number_of_participants=minimum_number_of_participants,
                             maximum_number_of_participants=maximum_number_of_participants, price=price, date=date,
-                            activity_type=activity_type)
+                            activity_type=activity_type, img_link=img_link, banner=banner)
     db.session.add(new_activity)
     db.session.commit()
     return jsonify({'new_activity': new_activity.to_dict(), 'code': 1})
