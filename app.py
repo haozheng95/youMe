@@ -169,7 +169,56 @@ db.create_all()
 @app.route('/activities', methods=['GET'])
 def get_activities():
     activities = Activity.query.all()
-    return jsonify({'data': [activity.to_dict() for activity in activities], 'code': 1})
+    # return jsonify({'data': [activity.to_dict() for activity in activities], 'code': 1})
+    data = {
+        "code": 1,
+        "banner_list": [
+            {
+                "address": "Beijing Main Street, Cityville",
+                "description": "This is an example Banner description.",
+                "end_date": "Sat, 01 Apr 2023 14:00:00 GMT",
+                "img_link": "https://hssx.top/static/assets/img/demo/blog4.jpg",
+                "id": 2,
+                "maximum_number_of_participants": 20,
+                "minimum_number_of_participants": 5,
+                "name": "Example Activity",
+                "price": "10",
+                "start_date": "Sat, 01 Apr 2023 10:00:00 GMT",
+                "activity_type": 1,
+                "deadline_for_registration": 5,
+            }
+        ],
+        "activity_list": [
+            {
+                "address": "123 Main Street, Cityville",
+                "description": "This is an example activity description.",
+                "end_date": "Sat, 01 Apr 2023 14:00:00 GMT",
+                "img_link": "https://hssx.top/static/assets/img/demo/blog5.jpg",
+                "id": 1,
+                "maximum_number_of_participants": 20,
+                "minimum_number_of_participants": 5,
+                "name": "Example Activity",
+                "price": "50",
+                "start_date": "Sat, 01 Apr 2023 10:00:00 GMT",
+                "activity_type": 1,
+                "deadline_for_registration": 5,
+            },{
+                "address": "hhhhhhhhh Main Street, Cityville",
+                "description": "This is an example activity description.",
+                "end_date": "Sat, 01 Apr 2023 14:00:00 GMT",
+                "img_link": "https://hssx.top/static/assets/img/demo/blog6.jpg",
+                "id": 3,
+                "maximum_number_of_participants": 20,
+                "minimum_number_of_participants": 5,
+                "name": "Example Activity",
+                "price": "50",
+                "start_date": "Sat, 01 Apr 2023 10:00:00 GMT",
+                "activity_type": 1,
+                "deadline_for_registration": 5,
+            },
+        ]
+    }
+    return jsonify(data)
 
 
 # 获取特定活动的报名用户
@@ -297,7 +346,9 @@ def get_activity(activity_id):
     activity = Activity.query.get(activity_id)
     if not activity:
         return jsonify({'error': 'Activity not found', 'code': 0}), 404
-    return jsonify(activity.to_dict())
+    data = activity.to_dict()
+    data["code"] = 1
+    return jsonify(data)
 
 
 # 更新活动
