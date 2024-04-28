@@ -12,7 +12,8 @@
 ```bash
 curl -X POST -H "Content-Type: application/json" -d '  
 {  
-    "phone": "1234567890",  
+    "phone": "12345678909",  
+    "temp_code": "0f1Jp1Ga1bCKlH0t1MGa1afSTW2Jp1GW",
     "name": "张三",  
     "nickname": "张三丰",  
     "sex": "男",  

@@ -5,9 +5,23 @@
 ```bash
 curl -X POST http://localhost:5000/activities/1/register -H "Content-Type: application/json" -d '  
 {  
-    "user_id": 1,  
-    "open_id": "o_rIW4_ZX4_jjfBu86EKQm7Dxx5w"
+    "user_id": 1
 }'
+```
+报名成功后的response
+```json
+{
+    "code": 1,
+    "data": {
+        "app_id": "wx0e24eb45b22f83c3",
+        "nonce_str": "uPa5kIVsf4wmD72QZRNjptdSHoY8rb",
+        "pay_sign": "HSFdZD1zjWV2UhuvHHV8sptaOVGdq354pAPLhflV+q0DrvOoK070lNXked5vNqT/u4B/6pOPf1ypInaP/YmRWoaEkBTgt8/LlJb2AOqXQNXDlC2rtUiCeQ9w0h8O9ICDXjchipDM7vCSvjRg3/YbqqTCGL/EPaVKanq1vK1jw7DF1y7hbmt/hUDyKvhNBxfVPUWYgFsscOiPj2fVzxKf2bcIBWJufoBnFyJYL9jafyYMC09tdmfPAzr8pxRbWTV9Ez0k0vumcLm02S391bfV2QwshKt3AX+zhEbgC/ghiQ4qMnEvuymkZuY+TPhuOl4wpihpnPlMN+KdGScHAhg7fQ==",
+        "prepay_id": "prepay_id=wx28111130196762ea90fe87f5ef25700001",
+        "sign_type": "RSA",
+        "timestamp": "timestamp"
+    },
+    "message": "User registered successfully"
+}
 ```
 
 在这个命令中，我们假设API的报名活动端点是`http://localhost:5000/activities/1/register`，并且它接受一个JSON格式的请求体，其中包含活动ID（`activity_id`）、用户ID（`user_id`）以及其他可选参数（`other_params`）。您需要根据实际的API参数来调整这个命令。

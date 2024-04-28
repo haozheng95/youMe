@@ -14,12 +14,13 @@ def get_wx_info(code):
     secret = 'e8a245db077272236f94fa5fb993c642'
     url = f"https://api.weixin.qq.com/sns/jscode2session?appid={appid}&secret={secret}&js_code={code}&grant_type=authorization_code"
     response = requests.get(url)
-    data = response.json()
-    print(data)
-    openid = data.get('openid')
-    session_key = data.get('session_key')
-    # ... 存储openid和session_key等操作 ...
-    return openid, session_key
+    return response
+    # data = response.json()
+    # print(data)
+    # openid = data.get('openid')
+    # session_key = data.get('session_key')
+    # # ... 存储openid和session_key等操作 ...
+    # return openid, session_key
 
 
 def send_smscode(code, phone):

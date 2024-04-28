@@ -10,9 +10,9 @@ from flask_cors import CORS
 from flask_login import LoginManager
 
 from alibaba import Sample
-from utils import generate_captcha, send_smscode, generate_token, verify_token
+from utils import generate_captcha, send_smscode, generate_token, verify_token, get_wx_info
 from AREA import AREA, provinces_and_cities
-from wx_pay import create_wx_pay_body, wx_pay
+from wx_pay import create_wx_pay_body, wx_pay, wx_payment
 
 # 配置日志格式
 # logging.basicConfig(level=logging.INFO,
@@ -93,6 +93,7 @@ class ActivityTable(db.Model):
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     phone = db.Column(db.String(50), unique=True, nullable=False)
+    open_id = db.Column(db.String(50), unique=True, nullable=False)
     nickname = db.Column(db.String(80), unique=False, nullable=False)
     name = db.Column(db.String(50), nullable=False)  # 姓名
     sex = db.Column(db.String(50), nullable=False)  # 性别
@@ -124,6 +125,7 @@ class User(db.Model):
             'city': self.city,
             'age': self.age,
             'degree': self.degree,
+            'open_id': self.open_id
         }
 
 
@@ -145,7 +147,7 @@ class Activity(db.Model):
 
     def get_deadline_for_registration(self):
         reference_date = datetime.datetime.now()
-        return (self.start_date - reference_date).days
+        return (self.end_date - reference_date).days
 
     def to_dict(self):
         return {
@@ -153,8 +155,8 @@ class Activity(db.Model):
             'name': self.name,
             'description': self.description,
             'address': self.address,
-            'start_date': self.start_date.strftime("%Y-%m-%d %H:%M") ,
-            'end_date': self.end_date.strftime("%Y-%m-%d %H:%M") ,
+            'start_date': self.start_date.strftime("%Y-%m-%d %H:%M"),
+            'end_date': self.end_date.strftime("%Y-%m-%d %H:%M"),
             'minimum_number_of_participants': self.minimum_number_of_participants,
             'maximum_number_of_participants': self.maximum_number_of_participants,
             'price': self.price,
@@ -179,7 +181,8 @@ db.create_all()
 @app.route('/activities', methods=['GET'])
 def get_activities():
     activities = Activity.query.all()
-    all_activities = [activity.to_dict() for activity in activities]
+    tmp_activities = [activity.to_dict() for activity in activities]
+    all_activities = [x for x in tmp_activities if x["deadline_for_registration"] > 0]
     banner_list = [x for x in all_activities if x["banner"] == 1]
     activity_list = [x for x in all_activities if x["banner"] == 0]
     data = {"code": 1, "banner_list": banner_list, "activity_list": activity_list}
@@ -203,9 +206,9 @@ def register_for_activity(activity_id):
     user_id = data.get('user_id')
     # number_of_participants = data.get('number_of_participants')
     # total_price = data.get('total_price')
-    open_id = data.get('open_id', None)
-    if open_id is None or len(open_id) == 0:
-        return jsonify({'error': 'open_id required', 'code': 0}), 400
+    # open_id = data.get('open_id', None)
+    # if open_id is None or len(open_id) == 0:
+    #     return jsonify({'error': 'open_id required', 'code': 0}), 400
     datetime_now = str(datetime.datetime.now())
 
     if not user_id:
@@ -239,12 +242,12 @@ def register_for_activity(activity_id):
     activity.participants.append(user)
     db.session.commit()
 
-    body = create_wx_pay_body(activity.description, open_id, int(total_price) * 100)
+    body = create_wx_pay_body(activity.description, user.open_id, int(total_price) * 100)
     r = wx_pay(body)
     if r.status_code != 200:
         return jsonify({'error': r.text, 'code': 0}), 400
-
-    return jsonify({'message': 'User registered successfully', 'prepay_id': r.json()['prepay_id'], 'code': 1})
+    data = wx_payment(r.json()['prepay_id'])
+    return jsonify({'message': 'User registered successfully', 'data': data, 'code': 1})
 
 
 # 用户取消报名活动
@@ -373,19 +376,29 @@ def create_user():
     occupation = data.get('occupation')
     monthly_salary = data.get('monthly_salary')
     datetime_now = str(datetime.datetime.now())
+    temp_code = data.get('temp_code')
 
     if not all([phone, name, nickname, sex, province, city, age, height, weight, degree, marital_status, occupation,
-                monthly_salary]):
+                monthly_salary, temp_code]):
         return jsonify(
             {
-                'error': 'phone, name, nickname, sex, province, city, age, height, weight, '
+                'error': 'phone, name, nickname, sex, province, city, age, height, weight, temp_code'
                          'degree, occupation, monthly_salary and marital_status are required', 'code': 0}), 400
 
+    r = get_wx_info(temp_code)
+    if r.status_code != 200:
+        logger.info(r.text)
+        return jsonify({'error': 'get openid fail', 'text': r.text, 'code': 0}), 400
     if User.query.filter_by(phone=phone).first():
         return jsonify({'error': 'phone already exists', 'code': 0}), 400
 
+    open_id = r.json().get('openid')
+
+    logger.info('open id  is %s' % open_id)
+    if open_id is None:
+        return jsonify({'error': 'get open id error', 'text': r.text, 'code': 0}), 400
     new_user = User(phone=phone, nickname=nickname, name=name, sex=sex, province=province, city=city, age=age,
-                    datetime=datetime_now, height=height, weight=weight,
+                    datetime=datetime_now, height=height, weight=weight, open_id=open_id,
                     degree=degree, marital_status=marital_status, occupation=occupation, monthly_salary=monthly_salary)
     # add options
     new_user.purpose_of_making_friends = data.get('purpose_of_making_friends')
@@ -400,6 +413,7 @@ def create_user():
     db.session.commit()
     data = new_user.to_dict()
     data["auth_token"] = generate_token(data["id"])
+    data["code"] = 1
     return jsonify(data)
 
 
@@ -477,7 +491,7 @@ def verify_verification_code():
     if user:
         token = generate_token(user.id)
         return jsonify({'message': 'Successful verificationt and The user has filled in the personal information.',
-                        'user_id': user.id, 'auth_token': token, 'code': 1}), 200
+                        'user_id': user.id, 'auth_token': token, 'code': 1, 'open_id': user.open_id}), 200
     return jsonify({'message': 'Successful verificationt,'
                                'However, you are an unregistered user and need to submit information to register',
                     'user_id': -1, 'auth_token': '', 'code': 1}), 200

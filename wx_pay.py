@@ -8,6 +8,8 @@ from Crypto.Signature import PKCS1_v1_5
 from Crypto.Hash import SHA256
 import base64
 
+AppID = 'wx0e24eb45b22f83c3'
+
 
 class Authorization(object):
     def __init__(self):
@@ -80,6 +82,18 @@ class Authorization(object):
                    )
         return authorization
 
+def wx_payment(prepay_id):
+    appid = AppID
+    authObj = Authorization()
+    nonce_str = authObj.getNonceStr()
+    timestamp = str(int(time.time()))
+    sign_list = [appid, timestamp, nonce_str, "prepay_id=" + prepay_id]
+    signstr = '\n'.join(sign_list) + '\n'
+    s = authObj.sign(signstr)
+
+    return {"nonce_str": nonce_str, "timestamp": "timestamp", "app_id": appid,
+            "prepay_id": "prepay_id=" + prepay_id, "sign_type": "RSA", "pay_sign": s}
+
 
 def wx_pay(body):
     method = "POST"
@@ -100,7 +114,7 @@ def wx_pay(body):
 
 
 def create_wx_pay_body(description, openid, amount):
-    appid = 'wx0e24eb45b22f83c3'
+    appid = AppID
     mchid = '1637086246'
     notify_url = 'https://api.mch.weixin.qq.com/v3/notify/jsapi'
 
