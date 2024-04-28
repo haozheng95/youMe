@@ -66,7 +66,7 @@ class ActivityTable(db.Model):
     number_of_participants = db.Column(db.Integer, nullable=False)
     total_price = db.Column(db.String(50), nullable=False)
     datetime = db.Column(db.String(50), nullable=False)
-    phone = db.Column(db.String(50), unique=True, nullable=False)
+    phone = db.Column(db.String(50), unique=False, nullable=False)
     nickname = db.Column(db.String(80), unique=False, nullable=False)
     name = db.Column(db.String(50), nullable=False)  # 姓名
     sex = db.Column(db.String(50), nullable=False)  # 性别
@@ -226,8 +226,9 @@ def register_for_activity(activity_id):
     if user in activity.participants:
         return jsonify({'error': 'User is already registered for this activity', 'code': 0}), 409
     total_price = activity.price
+    print(total_price)
     new_activity_table_record = ActivityTable(user_id=user_id, activity_id=activity_id, datetime=datetime_now,
-                                              number_of_participants=1, total_price=total_price,
+                                              number_of_participants=1, total_price=str(total_price),
                                               phone=user.phone, nickname=user.nickname, name=user.name, sex=user.sex,
                                               province=user.province, city=user.city, age=user.age, height=user.height,
                                               weight=user.weight, degree=user.degree,
@@ -242,7 +243,8 @@ def register_for_activity(activity_id):
     db.session.commit()
     activity.participants.append(user)
     db.session.commit()
-
+    logger.info("total price %s".format(float(total_price)))
+    print(total_price)
     body = create_wx_pay_body(activity.description, user.open_id, int(float(total_price) * 100))
     r = wx_pay(body)
     if r.status_code != 200:
