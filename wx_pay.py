@@ -91,7 +91,7 @@ def wx_payment(prepay_id):
     signstr = '\n'.join(sign_list) + '\n'
     s = authObj.sign(signstr)
 
-    return {"nonce_str": nonce_str, "timestamp": "timestamp", "app_id": appid,
+    return {"nonce_str": nonce_str, "timestamp": timestamp, "app_id": appid,
             "prepay_id": "prepay_id=" + prepay_id, "sign_type": "RSA", "pay_sign": s}
 
 

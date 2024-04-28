@@ -201,6 +201,7 @@ def get_activity_participants(activity_id):
 
 # 用户报名活动
 @app.route('/activities/<int:activity_id>/register', methods=['POST'])
+@requires_auth
 def register_for_activity(activity_id):
     data = request.get_json()
     user_id = data.get('user_id')
@@ -242,7 +243,7 @@ def register_for_activity(activity_id):
     activity.participants.append(user)
     db.session.commit()
 
-    body = create_wx_pay_body(activity.description, user.open_id, int(total_price) * 100)
+    body = create_wx_pay_body(activity.description, user.open_id, int(float(total_price) * 100))
     r = wx_pay(body)
     if r.status_code != 200:
         return jsonify({'error': r.text, 'code': 0}), 400

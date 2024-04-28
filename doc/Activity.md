@@ -31,7 +31,7 @@ curl -X GET http://localhost:5000/activities
 假设你想获取 ID 为 1 的活动：
 
 ```bash
-curl -X GET http://localhost:5000/activities/1
+curl -X GET https://hssx.top/activities/1 -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3NDU4MTE0MjEsImlhdCI6MTcxNDI3NTQyMSwic3ViIjoxfQ.lkuUrWpMH5JGiEitNyO_2QQkuSJiXGXHvOiyxEelwUs"
 ```
 
 ### 更新活动 (PUT /activities/<int:activity_id>)
