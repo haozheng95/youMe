@@ -313,6 +313,7 @@ def create_activity():
 
 # 获取单个活动
 @app.route('/activities/<int:activity_id>', methods=['GET'])
+@requires_auth
 def get_activity(activity_id):
     activity = Activity.query.get(activity_id)
     if not activity:
@@ -324,6 +325,7 @@ def get_activity(activity_id):
 
 # 更新活动
 @app.route('/activities/<int:activity_id>', methods=['PUT'])
+@requires_auth
 def update_activity(activity_id):
     data = request.get_json()
     activity = Activity.query.get(activity_id)
@@ -348,6 +350,7 @@ def update_activity(activity_id):
 
 # 删除活动
 @app.route('/activities/<int:activity_id>', methods=['DELETE'])
+@requires_auth
 def delete_activity(activity_id):
     activity = Activity.query.get(activity_id)
     if not activity:
@@ -419,6 +422,7 @@ def create_user():
 
 # 获取所有用户
 @app.route('/users', methods=['GET'])
+@requires_auth
 def get_users():
     users = User.query.all()
     return jsonify([user.to_dict() for user in users])
@@ -436,6 +440,7 @@ def get_user(user_id):
 
 # 删除用户
 @app.route('/users/<int:user_id>', methods=['DELETE'])
+@requires_auth
 def delete_user(user_id):
     user = User.query.get(user_id)
     if not user:
