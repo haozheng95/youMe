@@ -1,18 +1,23 @@
 import datetime
 import json
 import logging
+import threading
 from functools import wraps
-
+from flask_sockets import Sockets
 import xmltodict
-from flask import Flask, request, jsonify, render_template, flash, session as flask_session
+from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_login import LoginManager
-
 from alibaba import Sample
-from utils import generate_captcha, send_smscode, generate_token, verify_token, get_wx_info
+from utils import generate_captcha, generate_token, verify_token, get_wx_info
 from AREA import AREA, provinces_and_cities
 from wx_pay import create_wx_pay_body, wx_pay, wx_payment
+# from werkzeug.serving import run_simple
+from gevent import pywsgi
+from geventwebsocket.handler import WebSocketHandler
+
+
 
 # 配置日志格式
 # logging.basicConfig(level=logging.INFO,
@@ -25,6 +30,7 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s: %(message)s')
 
 app = Flask(__name__)
+sockets = Sockets(app)
 # 创建一个日志记录器，可以针对不同的模块或组件使用不同的记录器
 logger = logging.getLogger(__name__)
 app.secret_key = 'your-secret-key'
@@ -33,6 +39,9 @@ login_manager.init_app(app)
 CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/activity_registration.db'
 db = SQLAlchemy(app)
+# 存储所有连接的WebSocket
+connections = {}
+sockets_messages = {}
 
 
 # 装饰器：用于保护需要认证的路由
@@ -425,7 +434,6 @@ def create_user():
 
 # 获取所有用户
 @app.route('/users', methods=['GET'])
-@requires_auth
 def get_users():
     users = User.query.all()
     return jsonify([user.to_dict() for user in users])
@@ -548,6 +556,71 @@ def wechat_pay_notify():
         return '处理通知时发生错误', 500
 
 
+# 当客户端连接时触发
+@sockets.route('/chat')
+def chat_socket(ws):
+    logger.info("enter chat_socket")
+    # 将新的WebSocket连接添加到连接列表中
+    user_id = request.args.get('user_id')
+    partner_id = request.args.get('partner_id')
+    connections[user_id] = ws
+    if user_id in sockets_messages:
+        for message in sockets_messages[user_id]:
+            connections[user_id].send(message)
+        del sockets_messages[user_id]
+    # 当消息从客户端发送时触发
+    def receive_message():
+        while True:
+            message = ws.receive()
+            if message is None:
+                break
+            try:
+                data = json.loads(message)
+                content = data['content']
+                target_user_id = data['target']
+
+                # 将消息发送给聊天伙伴
+                if target_user_id in connections:
+                    connections[target_user_id].send(json.dumps({
+                        'content': content,
+                        'sender': user_id
+                    }))
+                else:
+                    if target_user_id in sockets_messages:
+                        sockets_messages[target_user_id].append(json.dumps({
+                            'content': content,
+                            'sender': user_id
+                        }))
+                    else:
+                        sockets_messages[target_user_id] = []
+                        sockets_messages[target_user_id].append(json.dumps({
+                            'content': content,
+                            'sender': user_id
+                        }))
+
+            except Exception as e:
+                logger.info(f"Error handling message: {e}")
+
+    # 创建一个新线程来接收消息，这样不会阻塞主线程
+    # thread = threading.Thread(target=receive_message)
+    # thread.start()
+    receive_message()
+    logger.info("ws will close")
+    # 当连接关闭时触发
+    try:
+        while True:
+            logger.info("ws.receive")
+            message = ws.receive()
+            logger.info(message)
+    except Exception as e:
+        logger.info(f"Connection closed: {e}")
+    finally:
+        # 从连接列表中移除已关闭的连接
+        if user_id in connections:
+            del connections[user_id]
+
+
+
 @login_manager.user_loader
 def load_user(user_id):
     # 根据 user_id 从数据库加载用户
@@ -569,6 +642,29 @@ def view_login():
 def view_profile():
     return render_template('profile.html')
 
+@app.route('/view/users', methods=['GET'])
+def get_user_list():
+    users = User.query.all()
+    users = [user.to_dict() for user in users]
+    return render_template('user_list.html', users=users)
+
+@app.route('/view/chat/<user_id>/<partner_id>')
+def chat(user_id, partner_id):
+    # 假设你有一个函数来获取用户信息
+    user = User.query.get(user_id)
+    partner = User.query.get(partner_id)
+    return render_template('chat.html', user=user, partner=partner)
+
+@app.route('/chat', methods=['GET'])
+def hello():
+    print(22222)
+    return 'Hello World!'
 
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0', port=80)
+    # app.run(debug=False, host='0.0.0.0', port=80)
+    # run_simple('localhost', 5000, app, use_reloader=True, use_debugger=True)
+
+    # from gevent import monkey
+    # monkey.patch_all()
+    server = pywsgi.WSGIServer(('localhost', 5000), app, handler_class=WebSocketHandler)
+    server.serve_forever()
