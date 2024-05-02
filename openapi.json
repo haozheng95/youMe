@@ -1,0 +1,710 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Swagger Petstore - OpenAPI 3.0",
+    "description": "This is a sample Pet Store Server based on the OpenAPI 3.0 specification.  You can find out more about\nSwagger at [https://swagger.io](https://swagger.io). In the third iteration of the pet store, we've switched to the design first approach!\nYou can now help us improve the API whether it's by making changes to the definition itself or to the code.\nThat way, with time, we can improve the API in general, and expose some of the new features in OAS3.\n\n_If you're looking for the Swagger 2.0/OAS 2.0 version of Petstore, then click [here](https://editor.swagger.io/?url=https://petstore.swagger.io/v2/swagger.yaml). Alternatively, you can load via the `Edit > Load Petstore OAS 2.0` menu option!_\n\nSome useful links:\n- [The Pet Store repository](https://github.com/swagger-api/swagger-petstore)\n- [The source API definition for the Pet Store](https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resources/openapi.yaml)",
+    "termsOfService": "http://swagger.io/terms/",
+    "contact": {
+      "email": "apiteam@swagger.io"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "version": "1.0.11"
+  },
+  "externalDocs": {
+    "description": "Find out more about Swagger",
+    "url": "http://swagger.io"
+  },
+  "servers": [
+    {
+      "url": "https://hssx.top/api/v1"
+    }
+  ],
+  "paths": {
+    "/questions": {
+      "get": {
+        "tags": [
+          "questions"
+        ],
+        "responses": {
+          "default": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Question"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/messages/{SenderID}/{ReceiverID}": {
+      "get": {
+        "tags": [
+          "messages"
+        ],
+        "parameters": [
+          {
+            "name": "SenderID",
+            "in": "path",
+            "description": "SenderID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "integer"
+            }
+          },
+          {
+            "name": "ReceiverID",
+            "in": "path",
+            "description": "ReceiverID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Message"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/activaty/{ActivatyID}": {
+      "get": {
+        "tags": [
+          "activaty"
+        ],
+        "parameters": [
+          {
+            "name": "ActivatyID",
+            "in": "path",
+            "description": "ActivatyID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Activaty"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "activaty"
+        ],
+        "summary": "Register to the Activaty",
+        "parameters": [
+          {
+            "name": "ActivatyID",
+            "in": "path",
+            "description": "ActivatyID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "member_id": {
+                    "type": "integer",
+                    "example": 1
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "example": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/activaty": {
+      "get": {
+        "tags": [
+          "activaty"
+        ],
+        "responses": {
+          "default": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Activaty"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "activaty"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Activaty"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "example": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/member/{MemberDI}": {
+      "get": {
+        "tags": [
+          "member"
+        ],
+        "parameters": [
+          {
+            "name": "MemberDI",
+            "in": "path",
+            "description": "MemberDI",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Member"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/member": {
+      "post": {
+        "tags": [
+          "member"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Member"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "example": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/region/provinces/{ProvinceID}/{CityID}": {
+      "get": {
+        "tags": [
+          "region"
+        ],
+        "parameters": [
+          {
+            "name": "ProvinceID",
+            "in": "path",
+            "description": "ProvinceID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "integer"
+            }
+          },
+          {
+            "name": "CityID",
+            "in": "path",
+            "description": "CityID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "county": {
+                        "type": "string",
+                        "example": "昌平"
+                      },
+                      "id": {
+                        "type": "integer",
+                        "example": 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/region/provinces/{ProvinceID}": {
+      "get": {
+        "tags": [
+          "region"
+        ],
+        "parameters": [
+          {
+            "name": "ProvinceID",
+            "in": "path",
+            "description": "ProvinceID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "city": {
+                        "type": "string",
+                        "example": "北京"
+                      },
+                      "id": {
+                        "type": "integer",
+                        "example": 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/region/provinces": {
+      "get": {
+        "tags": [
+          "region"
+        ],
+        "responses": {
+          "default": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "province": {
+                        "type": "string",
+                        "example": "北京市"
+                      },
+                      "id": {
+                        "type": "integer",
+                        "example": 2
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mobile/VerifyCode/{PhoneNumber}": {
+      "get": {
+        "tags": [
+          "mobile"
+        ],
+        "summary": "Get Verify Code",
+        "description": "Enter the phone number to get the verification code information",
+        "operationId": "getMobileVerifyCode",
+        "parameters": [
+          {
+            "name": "PhoneNumber",
+            "in": "path",
+            "description": "Phone Number",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "phone": {
+                      "type": "string",
+                      "example": 15121066738
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "mobile"
+        ],
+        "parameters": [
+          {
+            "name": "PhoneNumber",
+            "in": "path",
+            "description": "Phone Number",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Create a new pet in the store",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "example": 1111
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "phone": {
+                      "type": "string",
+                      "example": 15121066738
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Question": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "example": "Simple Question"
+          }
+        }
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "sender": {
+            "type": "integer",
+            "example": 3
+          },
+          "recevier": {
+            "type": "integer",
+            "example": 2
+          },
+          "type": {
+            "type": "integer",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "example": "Simple Title"
+          },
+          "content": {
+            "type": "string",
+            "example": "Simple Content"
+          }
+        }
+      },
+      "Activaty": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Simaple Title"
+          },
+          "description": {
+            "type": "string",
+            "example": "Simaple description"
+          },
+          "address": {
+            "type": "string",
+            "example": "Simaple Address"
+          },
+          "start_time": {
+            "type": "string",
+            "example": 2222222
+          },
+          "end_time": {
+            "type": "string",
+            "example": 111111111
+          },
+          "mini_people_num": {
+            "type": "integer",
+            "example": 3
+          },
+          "max_people_num": {
+            "type": "integer",
+            "example": 5
+          },
+          "price": {
+            "type": "integer",
+            "example": 6
+          },
+          "images": {
+            "type": "string",
+            "example": "Simaple Images link Text"
+          },
+          "ad_image": {
+            "type": "string",
+            "example": "Simaple Ad_image"
+          },
+          "type": {
+            "type": "integer",
+            "example": 1
+          }
+        }
+      },
+      "Member": {
+        "type": "object",
+        "properties": {
+          "mobile": {
+            "type": "string",
+            "example": 15121066738
+          },
+          "openid": {
+            "type": "string",
+            "example": "your openid"
+          },
+          "nickname": {
+            "type": "string",
+            "example": "your nickname"
+          },
+          "real_name": {
+            "type": "string",
+            "example": "Elon"
+          },
+          "id_card_number": {
+            "type": "string",
+            "example": 111000222333444550000
+          },
+          "sex": {
+            "type": "integer",
+            "example": 1
+          },
+          "money": {
+            "type": "integer",
+            "example": 400
+          },
+          "home_town_id": {
+            "type": "integer",
+            "example": 1
+          },
+          "region_id": {
+            "type": "integer",
+            "example": 2
+          },
+          "age": {
+            "type": "integer",
+            "example": 19
+          },
+          "weight": {
+            "type": "integer",
+            "example": 19
+          },
+          "degree": {
+            "type": "integer",
+            "example": 1
+          },
+          "marital_status": {
+            "type": "integer",
+            "example": 1
+          },
+          "year_salary": {
+            "type": "integer",
+            "example": 1900
+          },
+          "photo": {
+            "type": "string",
+            "example": "http://example.photo.com/photo1"
+          },
+          "purpose": {
+            "type": "integer",
+            "example": 1
+          },
+          "house": {
+            "type": "integer",
+            "example": 1
+          },
+          "car": {
+            "type": "integer",
+            "example": 1
+          },
+          "travel": {
+            "type": "integer",
+            "example": 1
+          },
+          "kids_plan": {
+            "type": "integer",
+            "example": 1
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "petstore_auth": {
+        "type": "oauth2",
+        "flows": {
+          "implicit": {
+            "authorizationUrl": "https://petstore3.swagger.io/oauth/authorize",
+            "scopes": {
+              "write:pets": "modify pets in your account",
+              "read:pets": "read your pets"
+            }
+          }
+        }
+      },
+      "api_key": {
+        "type": "apiKey",
+        "name": "api_key",
+        "in": "header"
+      }
+    }
+  }
+}
